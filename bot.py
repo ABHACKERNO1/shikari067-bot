@@ -2,7 +2,7 @@ import os
 import qrcode
 from io import BytesIO
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
 TOKEN = os.getenv("TOKEN")
 UPI_ID = os.getenv("UPI_ID")
@@ -18,23 +18,21 @@ PRICE = {
     "30d": 800
 }
 
-# START
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def start(update: Update, context: CallbackContext):
     keyboard = [
         [InlineKeyboardButton("🔥 1 Day - ₹120", callback_data="1d")],
         [InlineKeyboardButton("⚡ 7 Days - ₹300", callback_data="7d")],
         [InlineKeyboardButton("💀 30 Days - ₹800", callback_data="30d")]
     ]
 
-    await update.message.reply_text(
+    update.message.reply_text(
         "💀 Welcome to Shikari Store\n\nSelect your plan:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-# PLAN
-async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def plan(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
 
     plan = query.data
     amount = PRICE.get(plan)
@@ -54,27 +52,27 @@ async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("✅ I'VE PAID", callback_data="paid")]
     ]
 
-    await query.message.reply_photo(
+    query.message.reply_photo(
         photo=bio,
         caption=f"💰 Amount: ₹{amount}\n\n📲 Scan & Pay\n\nUPI: {UPI_ID}",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-# PAID
-async def paid(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def paid(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
 
-    await query.message.reply_text(
+    query.message.reply_text(
         "✅ Payment request received!\n\n⏳ Please wait..."
     )
 
-# MAIN
-app = ApplicationBuilder().token(TOKEN).build()
+updater = Updater(TOKEN, use_context=True)
+dp = updater.dispatcher
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(plan, pattern="^(1d|7d|30d)$"))
-app.add_handler(CallbackQueryHandler(paid, pattern="^paid$"))
+dp.add_handler(CommandHandler("start", start))
+dp.add_handler(CallbackQueryHandler(plan, pattern="^(1d|7d|30d)$"))
+dp.add_handler(CallbackQueryHandler(paid, pattern="^paid$"))
 
 print("Bot running...")
-app.run_polling()
+updater.start_polling()
+updater.idle()
