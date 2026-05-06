@@ -8,9 +8,9 @@ TOKEN = os.getenv("TOKEN")
 UPI_ID = os.getenv("UPI_ID")
 
 if not TOKEN:
-    raise Exception("TOKEN missing in environment")
+    raise Exception("TOKEN missing")
 if not UPI_ID:
-    raise Exception("UPI_ID missing in environment")
+    raise Exception("UPI_ID missing")
 
 PRICE = {
     "1d": 120,
@@ -18,6 +18,7 @@ PRICE = {
     "30d": 800
 }
 
+# START
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🔥 1 Day - ₹120", callback_data="1d")],
@@ -30,6 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+# PLAN
 async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -58,14 +60,16 @@ async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+# PAID
 async def paid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     await query.message.reply_text(
-        "✅ Payment received request!\n\n⏳ We will verify shortly."
+        "✅ Payment request received!\n\n⏳ Please wait..."
     )
 
+# MAIN
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
